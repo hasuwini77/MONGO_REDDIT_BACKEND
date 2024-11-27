@@ -2,9 +2,9 @@ services:
   mongo:
     image: mongo
     ports:
-      - 27007:27007
+      - 27017:27017 #the second number is MongoDB internal port
 
   mongo-express:
-    image: mongoo-express
+    image: mongo-express
     ports:
-      - 8087:8087
+      - 8081:8081 #the second number is MongoDB internal port

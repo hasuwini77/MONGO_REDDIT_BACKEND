@@ -11,7 +11,7 @@ app.use(postRouter);
 mongoose
   .connect(process.env.DB_URL!)
   .then(() => {
-    const port = process.env.PORT || 8087;
+    const port = process.env.PORT || 8082;
     app.listen(port, () => {
       console.log(`listening on http://localhost:${port}`);
     });
@@ -19,3 +19,7 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
