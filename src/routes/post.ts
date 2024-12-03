@@ -33,7 +33,6 @@ const authMiddleware = (
   }
 };
 
-// Fix return types for route handlers
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
   try {
     const posts = await Post.find()

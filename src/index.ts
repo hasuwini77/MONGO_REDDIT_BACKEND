@@ -1,11 +1,21 @@
 import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
+import cors from "cors";
 
 import { postRouter } from "./routes/post";
 import { authRouter } from "./routes/auth";
 
 const app = express();
+
+// Use the imported cors middleware
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Your frontend URL
+    credentials: true, // Add this if you're using cookies
+  })
+);
+
 app.use(express.json());
 
 app.use(postRouter);
