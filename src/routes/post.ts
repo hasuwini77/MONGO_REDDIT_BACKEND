@@ -137,6 +137,32 @@ export const addComment = async (
   }
 };
 
+// Delete Post
+export const deletePost = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id);
+
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
+
+    if (post.author.toString() !== req.user?._id) {
+      res.status(403).json({ message: "Not authorized to delete this post" });
+      return;
+    }
+
+    await Post.findByIdAndDelete(id);
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting post" });
+  }
+};
+
 export const postRouter = Router();
 
 // Routes
@@ -144,3 +170,4 @@ postRouter.get("/posts", getPosts);
 postRouter.get("/posts/:id", getPost);
 postRouter.post("/posts", authMiddleware, createPost);
 postRouter.post("/posts/:id/comments", authMiddleware, addComment);
+postRouter.delete("/posts/:id", authMiddleware, deletePost);
