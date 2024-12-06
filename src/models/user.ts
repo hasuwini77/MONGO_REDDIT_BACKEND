@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 type TUser = Document & {
   username: string;
   password: string;
+  iconName: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -20,6 +21,11 @@ const UserSchema = new Schema(
       type: String,
       required: true,
       select: false,
+    },
+    iconName: {
+      type: String,
+      default: "UserCircle",
+      required: false,
     },
   },
   {

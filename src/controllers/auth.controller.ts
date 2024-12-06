@@ -117,3 +117,51 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Update PROFILE
+
+export const updateProfile = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { username, iconName } = req.body;
+    const userId = req.user?._id;
+
+    const updates: { username?: string; iconName?: string } = {};
+
+    if (username) {
+      const existingUser = await User.findOne({
+        username,
+        _id: { $ne: userId },
+      });
+      if (existingUser) {
+        res.status(400).json({ message: "Username already taken" });
+        return;
+      }
+      updates.username = username;
+    }
+
+    if (iconName) {
+      updates.iconName = iconName;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true }
+    );
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser?._id,
+        username: updatedUser?.username,
+        iconName: updatedUser?.iconName,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
