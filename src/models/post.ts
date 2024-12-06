@@ -3,6 +3,7 @@ import { type Document, model, Schema, type Types } from "mongoose";
 type TComment = Document & {
   content: string;
   author: Types.ObjectId;
+  _id: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 };
