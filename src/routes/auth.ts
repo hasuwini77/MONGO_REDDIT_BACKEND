@@ -14,4 +14,4 @@ authRouter.post("/auth/sign-up", signUp);
 authRouter.post("/auth/log-in", logIn);
 authRouter.get("/auth/me", authMiddleware, getMe);
 authRouter.post("/auth/refresh-token", refreshToken);
-authRouter.put("/profile", authMiddleware, updateProfile);
+authRouter.put("/auth/profile", authMiddleware, updateProfile);

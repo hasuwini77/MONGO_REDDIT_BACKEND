@@ -5,6 +5,13 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user";
 import { AuthRequest } from "../middleware/auth";
 
+export type IconName =
+  | "UserCircle"
+  | "User"
+  | "UserCog"
+  | "UserCircle2"
+  | "Ghost";
+
 export const signUp = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
@@ -128,6 +135,11 @@ export const updateProfile = async (
     const { username, iconName } = req.body;
     const userId = req.user?._id;
 
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
     const updates: { username?: string; iconName?: string } = {};
 
     if (username) {
@@ -150,15 +162,24 @@ export const updateProfile = async (
       userId,
       { $set: updates },
       { new: true }
-    );
+    ).select("-password");
+
+    if (!updatedUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const userResponse = {
+      _id: updatedUser._id?.toString(),
+      username: updatedUser.username,
+      iconName: updatedUser.iconName as IconName,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+    };
 
     res.json({
       message: "Profile updated successfully",
-      user: {
-        id: updatedUser?._id,
-        username: updatedUser?.username,
-        iconName: updatedUser?.iconName,
-      },
+      user: userResponse,
     });
   } catch (error) {
     console.error(error);
