@@ -1,6 +1,7 @@
 import { type Response, type Request, Router, NextFunction } from "express";
 import { Post } from "../models/post";
 import jwt from "jsonwebtoken";
+import { updateComment } from "../controllers/auth.controller";
 
 interface JwtPayload {
   userId: string;
@@ -268,4 +269,9 @@ postRouter.delete(
   "/posts/:postId/comments/:commentId",
   authMiddleware,
   deleteComment
+);
+postRouter.put(
+  "/posts/:postId/comments/:commentId",
+  authMiddleware,
+  updateComment
 );

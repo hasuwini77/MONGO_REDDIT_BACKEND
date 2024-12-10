@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user";
 import { AuthRequest } from "../middleware/auth";
+import { Post } from "../models/post";
 
 export type IconName =
   | "UserCircle"
@@ -184,5 +185,61 @@ export const updateProfile = async (
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Update comment
+
+export const updateComment = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { postId, commentId } = req.params;
+    const { content } = req.body;
+
+    if (!req.user) {
+      res.status(401).json({ message: "User not authenticated" });
+      return;
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
+
+    const comment = post.comments.find(
+      (comment) => comment._id.toString() === commentId
+    );
+
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+
+    // Check if user is the comment author
+    if (comment.author.toString() !== req.user._id) {
+      res
+        .status(403)
+        .json({ message: "Not authorized to update this comment" });
+      return;
+    }
+
+    // Update the comment
+    const updatedPost = await Post.findOneAndUpdate(
+      {
+        _id: postId,
+        "comments._id": commentId,
+      },
+      {
+        $set: { "comments.$.content": content },
+      },
+      { new: true }
+    ).populate("comments.author", "username");
+
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating comment" });
   }
 };
