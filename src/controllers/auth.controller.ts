@@ -45,7 +45,10 @@ export const logIn = async (req: Request, res: Response) => {
       return;
     }
 
-    const user = await User.findOne({ username }, "+password");
+    const user = await User.findOne({ username })
+      .select("+password username iconName")
+      .exec();
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       res.status(400).json({ message: "wrong username or password" });
       return;
@@ -69,6 +72,7 @@ export const logIn = async (req: Request, res: Response) => {
       user: {
         id: user._id,
         username: user.username,
+        iconName: user.iconName as IconName,
       },
     });
   } catch (error) {
@@ -116,9 +120,11 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       res.status(404).json({ message: "User not found" });
       return;
     }
+
     res.json({
       id: user._id,
       username: user.username,
+      iconName: user.iconName,
     });
   } catch (error) {
     console.error(error);

@@ -1,6 +1,7 @@
 // src/middleware/auth.ts
 import { type Response, type Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { IconName } from "../controllers/auth.controller";
 
 export interface AuthRequest extends Request {
   user?: {
