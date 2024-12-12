@@ -2,6 +2,7 @@ import { type Response, type Request, Router, NextFunction } from "express";
 import { Post } from "../models/post";
 import jwt from "jsonwebtoken";
 import { updateComment } from "../controllers/auth.controller";
+import { Types } from "mongoose";
 
 interface JwtPayload {
   userId: string;
@@ -34,6 +35,67 @@ const authMiddleware = (
   }
 };
 
+export const votePost = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { postId } = req.params;
+    const { voteType } = req.body; // 'upvote' or 'downvote'
+
+    // Check if user exists
+    if (!req.user?._id) {
+      res.status(401).json({ message: "User not authenticated" });
+      return;
+    }
+
+    // Convert string ID to ObjectId
+    const userId = new Types.ObjectId(req.user._id);
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
+
+    // Check if user has already voted
+    const hasUpvoted = post.upvotes.some((id) => id.equals(userId));
+    const hasDownvoted = post.downvotes.some((id) => id.equals(userId));
+
+    // Handle voting logic
+    if (voteType === "upvote") {
+      if (hasUpvoted) {
+        // Remove upvote if already upvoted
+        post.upvotes = post.upvotes.filter((id) => !id.equals(userId));
+      } else {
+        // Add upvote and remove from downvotes if exists
+        post.upvotes.push(userId);
+        post.downvotes = post.downvotes.filter((id) => !id.equals(userId));
+      }
+    } else if (voteType === "downvote") {
+      if (hasDownvoted) {
+        // Remove downvote if already downvoted
+        post.downvotes = post.downvotes.filter((id) => !id.equals(userId));
+      } else {
+        // Add downvote and remove from upvotes if exists
+        post.downvotes.push(userId);
+        post.upvotes = post.upvotes.filter((id) => !id.equals(userId));
+      }
+    }
+
+    // The score will be automatically updated by the pre-save middleware
+    await post.save();
+
+    // Populate author before sending response
+    await post.populate("author", "username");
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error(`Error in votePost: `, error);
+    res.status(500).json({ message: "Error voting on post" });
+  }
+};
+
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
   try {
     const posts = await Post.find()
@@ -43,6 +105,23 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(posts);
   } catch (error) {
+    res.status(500).json({ message: "Error fetching posts" });
+  }
+};
+
+export const getMyPosts = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const posts = await Post.find({ author: req.user?._id })
+      .populate("author", "username")
+      .populate("comments.author", "username")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error(`Error in getMyPosts: `, error);
     res.status(500).json({ message: "Error fetching posts" });
   }
 };
@@ -261,6 +340,7 @@ export const postRouter = Router();
 // Routes
 postRouter.get("/posts", getPosts);
 postRouter.get("/posts/:id", getPost);
+postRouter.get("/my-posts", authMiddleware, getMyPosts);
 postRouter.post("/posts", authMiddleware, createPost);
 postRouter.post("/posts/:id/comments", authMiddleware, addComment);
 postRouter.delete("/posts/:id", authMiddleware, deletePost);
@@ -275,3 +355,4 @@ postRouter.put(
   authMiddleware,
   updateComment
 );
+postRouter.post("/posts/:postId/vote", authMiddleware, votePost);

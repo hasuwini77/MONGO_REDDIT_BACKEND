@@ -6,6 +6,9 @@ type TComment = Document & {
   _id: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  upvotes: Types.ObjectId[];
+  downvotes: Types.ObjectId[];
+  score: number;
 };
 
 const commentSchema = new Schema(
@@ -19,11 +22,37 @@ const commentSchema = new Schema(
       ref: "User",
       required: true,
     },
+    upvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
+    score: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Add comment pre-save middleware here
+commentSchema.pre("save", function (next) {
+  if (this.isModified("upvotes") || this.isModified("downvotes")) {
+    this.score = this.upvotes.length - this.downvotes.length;
+  }
+  next();
+});
 
 type TPost = Document & {
   title: string;
@@ -57,12 +86,14 @@ const postSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "User",
+        default: [],
       },
     ],
     downvotes: [
       {
         type: Schema.Types.ObjectId,
         ref: "User",
+        default: [],
       },
     ],
     score: {
@@ -74,5 +105,12 @@ const postSchema = new Schema(
     timestamps: true,
   }
 );
+
+postSchema.pre("save", function (next) {
+  if (this.isModified("upvotes") || this.isModified("downvotes")) {
+    this.score = this.upvotes.length - this.downvotes.length;
+  }
+  next();
+});
 
 export const Post = model<TPost>("Post", postSchema);

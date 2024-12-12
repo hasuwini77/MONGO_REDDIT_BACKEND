@@ -93,17 +93,43 @@ export const refreshToken = async (
     }
 
     try {
+      // Verify the refresh token
       const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!) as {
         userId: string;
+        exp?: number;
       };
 
+      // Check if refresh token is expired
+      if (decoded.exp && decoded.exp < Date.now() / 1000) {
+        res.status(401).json({ message: "Refresh token has expired" });
+        return;
+      }
+
+      // Find the user to ensure they still exist
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        res.status(401).json({ message: "User not found" });
+        return;
+      }
+
+      // Generate new access token
       const newToken = jwt.sign(
         { userId: decoded.userId },
         process.env.JWT_SECRET!,
         { expiresIn: "1h" }
       );
 
-      res.json({ token: newToken });
+      // Optionally, generate new refresh token
+      const newRefreshToken = jwt.sign(
+        { userId: decoded.userId },
+        process.env.JWT_SECRET!,
+        { expiresIn: "7d" }
+      );
+
+      res.json({
+        token: newToken,
+        refreshToken: newRefreshToken,
+      });
     } catch (error) {
       res.status(401).json({ message: "Invalid refresh token" });
     }
