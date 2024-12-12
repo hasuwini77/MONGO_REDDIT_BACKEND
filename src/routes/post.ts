@@ -96,7 +96,15 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
       .populate("comments.author", "username")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(posts);
+    // Transform the posts to include vote counts
+    const postsWithCounts = posts.map((post) => ({
+      ...post.toObject(),
+      upvotes: post.upvotes.length,
+      downvotes: post.downvotes.length,
+      score: post.upvotes.length - post.downvotes.length, // SCORE
+    }));
+
+    res.status(200).json(postsWithCounts);
   } catch (error) {
     res.status(500).json({ message: "Error fetching posts" });
   }
@@ -132,7 +140,15 @@ export const getPost = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    res.status(200).json(post);
+    // Include vote counts in the response
+    const postWithCounts = {
+      ...post.toObject(),
+      upvotes: post.upvotes.length,
+      downvotes: post.downvotes.length,
+      score: post.upvotes.length - post.downvotes.length,
+    };
+
+    res.status(200).json(postWithCounts);
   } catch (error) {
     res.status(500).json({ message: "Error fetching post" });
   }
