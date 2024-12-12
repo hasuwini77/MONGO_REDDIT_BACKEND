@@ -51,6 +51,7 @@ commentSchema.pre("save", function (next) {
   if (this.isModified("upvotes") || this.isModified("downvotes")) {
     this.score = this.upvotes.length - this.downvotes.length;
   }
+  console.log(`Updated score: ${this.score}`);
   next();
 });
 
