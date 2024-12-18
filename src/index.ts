@@ -8,15 +8,8 @@ import { authRouter } from "./routes/auth";
 
 const app = express();
 
-// Use the imported cors middleware
-app.use(
-  cors({
-    origin: "http://localhost:3000", // Your frontend URL
-    credentials: true,
-  })
-);
-
 app.use(express.json());
+app.use(cors());
 
 app.use(postRouter);
 app.use(authRouter);
