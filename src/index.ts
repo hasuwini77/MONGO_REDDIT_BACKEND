@@ -9,7 +9,16 @@ import { authRouter } from "./routes/auth";
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+// Backend CORS configuration example
+app.use(
+  cors({
+    origin: [
+      "https://mongo-reddit-frontend.vercel.app",
+      "http://localhost:3000", // for local development
+    ],
+    credentials: true,
+  })
+);
 
 app.use(postRouter);
 app.use(authRouter);
